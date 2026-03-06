@@ -1,11 +1,11 @@
-import random
-import string
 from typing import Annotated
 
 import pymongo
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
+
+from base_func import Shortener
 
 app = FastAPI()
 
@@ -24,16 +24,7 @@ async def root(request: Request):
 
 @app.post("/")
 async def create_short_url(long_url: Annotated[str, Form()]):
-    available_chars = string.ascii_letters + string.digits
-
-    short_url = ''.join(random.choices(available_chars, k=7))
-    while await urls_collection.find_one({"short_url": short_url}) is not None:
-        short_url = ''.join(random.choices(available_chars, k=7))
-
-    final_document = {"short_url": short_url, "long_url": long_url, "clicks": 0}
-
-    await urls_collection.insert_one(final_document)
-
+    short_url = await Shortener.create_short_url(urls_collection, long_url)
     return {"message": f"Short URL created: {long_url}, short_url: {BASE_URL}/{short_url}"}
 
 
